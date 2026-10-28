@@ -1,0 +1,477 @@
+﻿《编译原理》实验三  综合实验（小型语言编译系统）运行结果
+示例：sample1_综合示例.txt
+read 输入数据：（无）
+
+################ 源程序 ################
+// 示例 1  综合示例：循环求和 + 分支判断
+// 期望输出：55 然后 1
+{
+    int n;
+    int i;
+    int sum;
+
+    n = 10;
+    i = 1;
+    sum = 0;
+    while (i <= n) {
+        sum = sum + i;
+        i = i + 1;
+    }
+    write(sum);
+
+    if (sum > 50) {
+        write(1);
+    } else {
+        write(0);
+    }
+}
+
+################ 一、词法分析 ################
+序号  种别码 syn  单词符号  种类      行  列
+--------------------------------------------
+1     27          {         界符      3   1
+2     1           int       关键字    4   5
+3     10          n         标识符    4   9
+4     29          ;         界符      4   10
+5     1           int       关键字    5   5
+6     10          i         标识符    5   9
+7     29          ;         界符      5   10
+8     1           int       关键字    6   5
+9     10          sum       标识符    6   9
+10    29          ;         界符      6   12
+11    10          n         标识符    8   5
+12    20          =         运算符    8   7
+13    11          10        整型常量  8   9
+14    29          ;         界符      8   11
+15    10          i         标识符    9   5
+16    20          =         运算符    9   7
+17    11          1         整型常量  9   9
+18    29          ;         界符      9   10
+19    10          sum       标识符    10  5
+20    20          =         运算符    10  9
+21    11          0         整型常量  10  11
+22    29          ;         界符      10  12
+23    5           while     关键字    11  5
+24    25          (         界符      11  11
+25    10          i         标识符    11  12
+26    42          <=        运算符    11  14
+27    10          n         标识符    11  17
+28    26          )         界符      11  18
+29    27          {         界符      11  20
+30    10          sum       标识符    12  9
+31    20          =         运算符    12  13
+32    10          sum       标识符    12  15
+33    21          +         运算符    12  19
+34    10          i         标识符    12  21
+35    29          ;         界符      12  22
+36    10          i         标识符    13  9
+37    20          =         运算符    13  11
+38    10          i         标识符    13  13
+39    21          +         运算符    13  15
+40    11          1         整型常量  13  17
+41    29          ;         界符      13  18
+42    28          }         界符      14  5
+43    7           write     关键字    15  5
+44    25          (         界符      15  10
+45    10          sum       标识符    15  11
+46    26          )         界符      15  14
+47    29          ;         界符      15  15
+48    3           if        关键字    17  5
+49    25          (         界符      17  8
+50    10          sum       标识符    17  9
+51    43          >         运算符    17  13
+52    11          50        整型常量  17  15
+53    26          )         界符      17  17
+54    27          {         界符      17  19
+55    7           write     关键字    18  9
+56    25          (         界符      18  14
+57    11          1         整型常量  18  15
+58    26          )         界符      18  16
+59    29          ;         界符      18  17
+60    28          }         界符      19  5
+61    4           else      关键字    19  7
+62    27          {         界符      19  12
+63    7           write     关键字    20  9
+64    25          (         界符      20  14
+65    11          0         整型常量  20  15
+66    26          )         界符      20  16
+67    29          ;         界符      20  17
+68    28          }         界符      21  5
+69    28          }         界符      22  1
+
+二元组序列 (syn, token)：
+(27,{) (1,int) (10,n) (29,;) (1,int) (10,i) (29,;) (1,int) (10,sum) (29,;) (10,n) (20,=) (11,10) (29,;) (10,i) (20,=) (11,1) (29,;) (10,sum) (20,=) (11,0) (29,;) (5,while) (25,() (10,i) (42,<=) (10,n) (26,)) (27,{) (10,sum) (20,=) (10,sum) (21,+) (10,i) (29,;) (10,i) (20,=) (10,i) (21,+) (11,1) (29,;) (28,}) (7,write) (25,() (10,sum) (26,)) (29,;) (3,if) (25,() (10,sum) (43,>) (11,50) (26,)) (27,{) (7,write) (25,() (11,1) (26,)) (29,;) (28,}) (4,else) (27,{) (7,write) (25,() (11,0) (26,)) (29,;) (28,}) (28,})
+
+词法错误：
+  未发现词法错误。
+
+################ 二、语法分析 ################
+-------------------- SLR(1) 分析表 --------------------
+状态  {    }    int  id   ;    real  =    if   (    )    else  while  read  write  relop  +    -    *    /    num  rnum  #    prog  blk  decls  decl  stmts  stmt  cond  expr  term  factor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0     s1                                                                                                                      2     3
+1     r4   r4   r4   r4        r4         r4                   r4     r4    r4                                                           4
+2                                                                                                                        acc
+3                                                                                                                        r1
+4     r8   r8   s5   r8        s6         r8                   r8     r8    r8                                                                  7     8
+5                    s9
+6                    s10
+7     r3   r3   r3   r3        r3         r3                   r3     r3    r3
+8     s1   s11       s12                  s13                  s14    s15   s16                                                     17                       18
+9                         s19
+10                        s20
+11    r2   r2        r2                   r2             r2    r2     r2    r2                                           r2
+12                                   s21
+13                                             s22
+14                                             s23
+15                                             s24
+16                                             s25
+17    r13  r13       r13                  r13                  r13    r13   r13
+18    r7   r7        r7                   r7                   r7     r7    r7
+19    r5   r5   r5   r5        r5         r5                   r5     r5    r5
+20    r6   r6   r6   r6        r6         r6                   r6     r6    r6
+21                   s26                       s27                                             s28            s29  s30                                                   31    32    33
+22                   s26                       s27                                             s28            s29  s30                                             34    35    32    33
+23                   s26                       s27                                             s28            s29  s30                                             36    35    32    33
+24                   s37
+25                   s26                       s27                                             s28            s29  s30                                                   38    32    33
+26                        r25                       r25                            r25    r25  r25  r25  r25
+27                   s26                       s27                                             s28            s29  s30                                                   39    32    33
+28                   s26                       s27                                             s28            s29  s30                                                               40
+29                        r26                       r26                            r26    r26  r26  r26  r26
+30                        r27                       r27                            r27    r27  r27  r27  r27
+31                        s41                                                             s42  s43
+32                        r20                       r20                            r20    r20  r20  s44  s45
+33                        r23                       r23                            r23    r23  r23  r23  r23
+34                                                  s46
+35                                                  r17                            s47    s42  s43
+36                                                  s48
+37                                                  s49
+38                                                  s50                                   s42  s43
+39                                                  s51                                   s42  s43
+40                        r28                       r28                            r28    r28  r28  r28  r28
+41    r9   r9        r9                   r9                   r9     r9    r9
+42                   s26                       s27                                             s28            s29  s30                                                         52    33
+43                   s26                       s27                                             s28            s29  s30                                                         53    33
+44                   s26                       s27                                             s28            s29  s30                                                               54
+45                   s26                       s27                                             s28            s29  s30                                                               55
+46    s1                                                                                                                            56
+47                   s26                       s27                                             s28            s29  s30                                                   57    32    33
+48    s1                                                                                                                            58
+49                        s59
+50                        s60
+51                        r24                       r24                            r24    r24  r24  r24  r24
+52                        r18                       r18                            r18    r18  r18  s44  s45
+53                        r19                       r19                            r19    r19  r19  s44  s45
+54                        r21                       r21                            r21    r21  r21  r21  r21
+55                        r22                       r22                            r22    r22  r22  r22  r22
+56    r10  r10       r10                  r10            s61   r10    r10   r10
+57                                                  r16                                   s42  s43
+58    r12  r12       r12                  r12                  r12    r12   r12
+59    r14  r14       r14                  r14                  r14    r14   r14
+60    r15  r15       r15                  r15                  r15    r15   r15
+61    s1                                                                                                                            62
+62    r11  r11       r11                  r11                  r11    r11   r11
+
+-------------------- 分析过程表 --------------------
+步骤  状态栈                                          符号栈                                                               当前输入  动作
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1     0                                               #                                                                    {         移进 “{”，转到状态 1
+2     0 1                                             # {                                                                  int       归约 decls→ε
+3     0 1 4                                           # { decls                                                            int       移进 “int”，转到状态 5
+4     0 1 4 5                                         # { decls int                                                        n         移进 “n”，转到状态 9
+5     0 1 4 5 9                                       # { decls int id                                                     ;         移进 “;”，转到状态 19
+6     0 1 4 5 9 19                                    # { decls int id ;                                                   int       归约 decl→int id ;
+7     0 1 4 7                                         # { decls decl                                                       int       归约 decls→decls decl
+8     0 1 4                                           # { decls                                                            int       移进 “int”，转到状态 5
+9     0 1 4 5                                         # { decls int                                                        i         移进 “i”，转到状态 9
+10    0 1 4 5 9                                       # { decls int id                                                     ;         移进 “;”，转到状态 19
+11    0 1 4 5 9 19                                    # { decls int id ;                                                   int       归约 decl→int id ;
+12    0 1 4 7                                         # { decls decl                                                       int       归约 decls→decls decl
+13    0 1 4                                           # { decls                                                            int       移进 “int”，转到状态 5
+14    0 1 4 5                                         # { decls int                                                        sum       移进 “sum”，转到状态 9
+15    0 1 4 5 9                                       # { decls int id                                                     ;         移进 “;”，转到状态 19
+16    0 1 4 5 9 19                                    # { decls int id ;                                                   n         归约 decl→int id ;
+17    0 1 4 7                                         # { decls decl                                                       n         归约 decls→decls decl
+18    0 1 4                                           # { decls                                                            n         归约 stmts→ε
+19    0 1 4 8                                         # { decls stmts                                                      n         移进 “n”，转到状态 12
+20    0 1 4 8 12                                      # { decls stmts id                                                   =         移进 “=”，转到状态 21
+21    0 1 4 8 12 21                                   # { decls stmts id =                                                 10        移进 “10”，转到状态 29
+22    0 1 4 8 12 21 29                                # { decls stmts id = num                                             ;         归约 factor→num
+23    0 1 4 8 12 21 33                                # { decls stmts id = factor                                          ;         归约 term→factor
+24    0 1 4 8 12 21 32                                # { decls stmts id = term                                            ;         归约 expr→term
+25    0 1 4 8 12 21 31                                # { decls stmts id = expr                                            ;         移进 “;”，转到状态 41
+26    0 1 4 8 12 21 31 41                             # { decls stmts id = expr ;                                          i         归约 stmt→id = expr ;
+27    0 1 4 8 18                                      # { decls stmts stmt                                                 i         归约 stmts→stmts stmt
+28    0 1 4 8                                         # { decls stmts                                                      i         移进 “i”，转到状态 12
+29    0 1 4 8 12                                      # { decls stmts id                                                   =         移进 “=”，转到状态 21
+30    0 1 4 8 12 21                                   # { decls stmts id =                                                 1         移进 “1”，转到状态 29
+31    0 1 4 8 12 21 29                                # { decls stmts id = num                                             ;         归约 factor→num
+32    0 1 4 8 12 21 33                                # { decls stmts id = factor                                          ;         归约 term→factor
+33    0 1 4 8 12 21 32                                # { decls stmts id = term                                            ;         归约 expr→term
+34    0 1 4 8 12 21 31                                # { decls stmts id = expr                                            ;         移进 “;”，转到状态 41
+35    0 1 4 8 12 21 31 41                             # { decls stmts id = expr ;                                          sum       归约 stmt→id = expr ;
+36    0 1 4 8 18                                      # { decls stmts stmt                                                 sum       归约 stmts→stmts stmt
+37    0 1 4 8                                         # { decls stmts                                                      sum       移进 “sum”，转到状态 12
+38    0 1 4 8 12                                      # { decls stmts id                                                   =         移进 “=”，转到状态 21
+39    0 1 4 8 12 21                                   # { decls stmts id =                                                 0         移进 “0”，转到状态 29
+40    0 1 4 8 12 21 29                                # { decls stmts id = num                                             ;         归约 factor→num
+41    0 1 4 8 12 21 33                                # { decls stmts id = factor                                          ;         归约 term→factor
+42    0 1 4 8 12 21 32                                # { decls stmts id = term                                            ;         归约 expr→term
+43    0 1 4 8 12 21 31                                # { decls stmts id = expr                                            ;         移进 “;”，转到状态 41
+44    0 1 4 8 12 21 31 41                             # { decls stmts id = expr ;                                          while     归约 stmt→id = expr ;
+45    0 1 4 8 18                                      # { decls stmts stmt                                                 while     归约 stmts→stmts stmt
+46    0 1 4 8                                         # { decls stmts                                                      while     移进 “while”，转到状态 14
+47    0 1 4 8 14                                      # { decls stmts while                                                (         移进 “(”，转到状态 23
+48    0 1 4 8 14 23                                   # { decls stmts while (                                              i         移进 “i”，转到状态 26
+49    0 1 4 8 14 23 26                                # { decls stmts while ( id                                           <=        归约 factor→id
+50    0 1 4 8 14 23 33                                # { decls stmts while ( factor                                       <=        归约 term→factor
+51    0 1 4 8 14 23 32                                # { decls stmts while ( term                                         <=        归约 expr→term
+52    0 1 4 8 14 23 35                                # { decls stmts while ( expr                                         <=        移进 “<=”，转到状态 47
+53    0 1 4 8 14 23 35 47                             # { decls stmts while ( expr relop                                   n         移进 “n”，转到状态 26
+54    0 1 4 8 14 23 35 47 26                          # { decls stmts while ( expr relop id                                )         归约 factor→id
+55    0 1 4 8 14 23 35 47 33                          # { decls stmts while ( expr relop factor                            )         归约 term→factor
+56    0 1 4 8 14 23 35 47 32                          # { decls stmts while ( expr relop term                              )         归约 expr→term
+57    0 1 4 8 14 23 35 47 57                          # { decls stmts while ( expr relop expr                              )         归约 cond→expr relop expr
+58    0 1 4 8 14 23 36                                # { decls stmts while ( cond                                         )         移进 “)”，转到状态 48
+59    0 1 4 8 14 23 36 48                             # { decls stmts while ( cond )                                       {         移进 “{”，转到状态 1
+60    0 1 4 8 14 23 36 48 1                           # { decls stmts while ( cond ) {                                     sum       归约 decls→ε
+61    0 1 4 8 14 23 36 48 1 4                         # { decls stmts while ( cond ) { decls                               sum       归约 stmts→ε
+62    0 1 4 8 14 23 36 48 1 4 8                       # { decls stmts while ( cond ) { decls stmts                         sum       移进 “sum”，转到状态 12
+63    0 1 4 8 14 23 36 48 1 4 8 12                    # { decls stmts while ( cond ) { decls stmts id                      =         移进 “=”，转到状态 21
+64    0 1 4 8 14 23 36 48 1 4 8 12 21                 # { decls stmts while ( cond ) { decls stmts id =                    sum       移进 “sum”，转到状态 26
+65    0 1 4 8 14 23 36 48 1 4 8 12 21 26              # { decls stmts while ( cond ) { decls stmts id = id                 +         归约 factor→id
+66    0 1 4 8 14 23 36 48 1 4 8 12 21 33              # { decls stmts while ( cond ) { decls stmts id = factor             +         归约 term→factor
+67    0 1 4 8 14 23 36 48 1 4 8 12 21 32              # { decls stmts while ( cond ) { decls stmts id = term               +         归约 expr→term
+68    0 1 4 8 14 23 36 48 1 4 8 12 21 31              # { decls stmts while ( cond ) { decls stmts id = expr               +         移进 “+”，转到状态 42
+69    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42           # { decls stmts while ( cond ) { decls stmts id = expr +             i         移进 “i”，转到状态 26
+70    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 26        # { decls stmts while ( cond ) { decls stmts id = expr + id          ;         归约 factor→id
+71    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 33        # { decls stmts while ( cond ) { decls stmts id = expr + factor      ;         归约 term→factor
+72    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 52        # { decls stmts while ( cond ) { decls stmts id = expr + term        ;         归约 expr→expr + term
+73    0 1 4 8 14 23 36 48 1 4 8 12 21 31              # { decls stmts while ( cond ) { decls stmts id = expr               ;         移进 “;”，转到状态 41
+74    0 1 4 8 14 23 36 48 1 4 8 12 21 31 41           # { decls stmts while ( cond ) { decls stmts id = expr ;             i         归约 stmt→id = expr ;
+75    0 1 4 8 14 23 36 48 1 4 8 18                    # { decls stmts while ( cond ) { decls stmts stmt                    i         归约 stmts→stmts stmt
+76    0 1 4 8 14 23 36 48 1 4 8                       # { decls stmts while ( cond ) { decls stmts                         i         移进 “i”，转到状态 12
+77    0 1 4 8 14 23 36 48 1 4 8 12                    # { decls stmts while ( cond ) { decls stmts id                      =         移进 “=”，转到状态 21
+78    0 1 4 8 14 23 36 48 1 4 8 12 21                 # { decls stmts while ( cond ) { decls stmts id =                    i         移进 “i”，转到状态 26
+79    0 1 4 8 14 23 36 48 1 4 8 12 21 26              # { decls stmts while ( cond ) { decls stmts id = id                 +         归约 factor→id
+80    0 1 4 8 14 23 36 48 1 4 8 12 21 33              # { decls stmts while ( cond ) { decls stmts id = factor             +         归约 term→factor
+81    0 1 4 8 14 23 36 48 1 4 8 12 21 32              # { decls stmts while ( cond ) { decls stmts id = term               +         归约 expr→term
+82    0 1 4 8 14 23 36 48 1 4 8 12 21 31              # { decls stmts while ( cond ) { decls stmts id = expr               +         移进 “+”，转到状态 42
+83    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42           # { decls stmts while ( cond ) { decls stmts id = expr +             1         移进 “1”，转到状态 29
+84    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 29        # { decls stmts while ( cond ) { decls stmts id = expr + num         ;         归约 factor→num
+85    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 33        # { decls stmts while ( cond ) { decls stmts id = expr + factor      ;         归约 term→factor
+86    0 1 4 8 14 23 36 48 1 4 8 12 21 31 42 52        # { decls stmts while ( cond ) { decls stmts id = expr + term        ;         归约 expr→expr + term
+87    0 1 4 8 14 23 36 48 1 4 8 12 21 31              # { decls stmts while ( cond ) { decls stmts id = expr               ;         移进 “;”，转到状态 41
+88    0 1 4 8 14 23 36 48 1 4 8 12 21 31 41           # { decls stmts while ( cond ) { decls stmts id = expr ;             }         归约 stmt→id = expr ;
+89    0 1 4 8 14 23 36 48 1 4 8 18                    # { decls stmts while ( cond ) { decls stmts stmt                    }         归约 stmts→stmts stmt
+90    0 1 4 8 14 23 36 48 1 4 8                       # { decls stmts while ( cond ) { decls stmts                         }         移进 “}”，转到状态 11
+91    0 1 4 8 14 23 36 48 1 4 8 11                    # { decls stmts while ( cond ) { decls stmts }                       write     归约 blk→{ decls stmts }
+92    0 1 4 8 14 23 36 48 58                          # { decls stmts while ( cond ) blk                                   write     归约 stmt→while ( cond ) blk
+93    0 1 4 8 18                                      # { decls stmts stmt                                                 write     归约 stmts→stmts stmt
+94    0 1 4 8                                         # { decls stmts                                                      write     移进 “write”，转到状态 16
+95    0 1 4 8 16                                      # { decls stmts write                                                (         移进 “(”，转到状态 25
+96    0 1 4 8 16 25                                   # { decls stmts write (                                              sum       移进 “sum”，转到状态 26
+97    0 1 4 8 16 25 26                                # { decls stmts write ( id                                           )         归约 factor→id
+98    0 1 4 8 16 25 33                                # { decls stmts write ( factor                                       )         归约 term→factor
+99    0 1 4 8 16 25 32                                # { decls stmts write ( term                                         )         归约 expr→term
+100   0 1 4 8 16 25 38                                # { decls stmts write ( expr                                         )         移进 “)”，转到状态 50
+101   0 1 4 8 16 25 38 50                             # { decls stmts write ( expr )                                       ;         移进 “;”，转到状态 60
+102   0 1 4 8 16 25 38 50 60                          # { decls stmts write ( expr ) ;                                     if        归约 stmt→write ( expr ) ;
+103   0 1 4 8 18                                      # { decls stmts stmt                                                 if        归约 stmts→stmts stmt
+104   0 1 4 8                                         # { decls stmts                                                      if        移进 “if”，转到状态 13
+105   0 1 4 8 13                                      # { decls stmts if                                                   (         移进 “(”，转到状态 22
+106   0 1 4 8 13 22                                   # { decls stmts if (                                                 sum       移进 “sum”，转到状态 26
+107   0 1 4 8 13 22 26                                # { decls stmts if ( id                                              >         归约 factor→id
+108   0 1 4 8 13 22 33                                # { decls stmts if ( factor                                          >         归约 term→factor
+109   0 1 4 8 13 22 32                                # { decls stmts if ( term                                            >         归约 expr→term
+110   0 1 4 8 13 22 35                                # { decls stmts if ( expr                                            >         移进 “>”，转到状态 47
+111   0 1 4 8 13 22 35 47                             # { decls stmts if ( expr relop                                      50        移进 “50”，转到状态 29
+112   0 1 4 8 13 22 35 47 29                          # { decls stmts if ( expr relop num                                  )         归约 factor→num
+113   0 1 4 8 13 22 35 47 33                          # { decls stmts if ( expr relop factor                               )         归约 term→factor
+114   0 1 4 8 13 22 35 47 32                          # { decls stmts if ( expr relop term                                 )         归约 expr→term
+115   0 1 4 8 13 22 35 47 57                          # { decls stmts if ( expr relop expr                                 )         归约 cond→expr relop expr
+116   0 1 4 8 13 22 34                                # { decls stmts if ( cond                                            )         移进 “)”，转到状态 46
+117   0 1 4 8 13 22 34 46                             # { decls stmts if ( cond )                                          {         移进 “{”，转到状态 1
+118   0 1 4 8 13 22 34 46 1                           # { decls stmts if ( cond ) {                                        write     归约 decls→ε
+119   0 1 4 8 13 22 34 46 1 4                         # { decls stmts if ( cond ) { decls                                  write     归约 stmts→ε
+120   0 1 4 8 13 22 34 46 1 4 8                       # { decls stmts if ( cond ) { decls stmts                            write     移进 “write”，转到状态 16
+121   0 1 4 8 13 22 34 46 1 4 8 16                    # { decls stmts if ( cond ) { decls stmts write                      (         移进 “(”，转到状态 25
+122   0 1 4 8 13 22 34 46 1 4 8 16 25                 # { decls stmts if ( cond ) { decls stmts write (                    1         移进 “1”，转到状态 29
+123   0 1 4 8 13 22 34 46 1 4 8 16 25 29              # { decls stmts if ( cond ) { decls stmts write ( num                )         归约 factor→num
+124   0 1 4 8 13 22 34 46 1 4 8 16 25 33              # { decls stmts if ( cond ) { decls stmts write ( factor             )         归约 term→factor
+125   0 1 4 8 13 22 34 46 1 4 8 16 25 32              # { decls stmts if ( cond ) { decls stmts write ( term               )         归约 expr→term
+126   0 1 4 8 13 22 34 46 1 4 8 16 25 38              # { decls stmts if ( cond ) { decls stmts write ( expr               )         移进 “)”，转到状态 50
+127   0 1 4 8 13 22 34 46 1 4 8 16 25 38 50           # { decls stmts if ( cond ) { decls stmts write ( expr )             ;         移进 “;”，转到状态 60
+128   0 1 4 8 13 22 34 46 1 4 8 16 25 38 50 60        # { decls stmts if ( cond ) { decls stmts write ( expr ) ;           }         归约 stmt→write ( expr ) ;
+129   0 1 4 8 13 22 34 46 1 4 8 18                    # { decls stmts if ( cond ) { decls stmts stmt                       }         归约 stmts→stmts stmt
+130   0 1 4 8 13 22 34 46 1 4 8                       # { decls stmts if ( cond ) { decls stmts                            }         移进 “}”，转到状态 11
+131   0 1 4 8 13 22 34 46 1 4 8 11                    # { decls stmts if ( cond ) { decls stmts }                          else      归约 blk→{ decls stmts }
+132   0 1 4 8 13 22 34 46 56                          # { decls stmts if ( cond ) blk                                      else      移进 “else”，转到状态 61
+133   0 1 4 8 13 22 34 46 56 61                       # { decls stmts if ( cond ) blk else                                 {         移进 “{”，转到状态 1
+134   0 1 4 8 13 22 34 46 56 61 1                     # { decls stmts if ( cond ) blk else {                               write     归约 decls→ε
+135   0 1 4 8 13 22 34 46 56 61 1 4                   # { decls stmts if ( cond ) blk else { decls                         write     归约 stmts→ε
+136   0 1 4 8 13 22 34 46 56 61 1 4 8                 # { decls stmts if ( cond ) blk else { decls stmts                   write     移进 “write”，转到状态 16
+137   0 1 4 8 13 22 34 46 56 61 1 4 8 16              # { decls stmts if ( cond ) blk else { decls stmts write             (         移进 “(”，转到状态 25
+138   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25           # { decls stmts if ( cond ) blk else { decls stmts write (           0         移进 “0”，转到状态 29
+139   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 29        # { decls stmts if ( cond ) blk else { decls stmts write ( num       )         归约 factor→num
+140   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 33        # { decls stmts if ( cond ) blk else { decls stmts write ( factor    )         归约 term→factor
+141   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 32        # { decls stmts if ( cond ) blk else { decls stmts write ( term      )         归约 expr→term
+142   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 38        # { decls stmts if ( cond ) blk else { decls stmts write ( expr      )         移进 “)”，转到状态 50
+143   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 38 50     # { decls stmts if ( cond ) blk else { decls stmts write ( expr )    ;         移进 “;”，转到状态 60
+144   0 1 4 8 13 22 34 46 56 61 1 4 8 16 25 38 50 60  # { decls stmts if ( cond ) blk else { decls stmts write ( expr ) ;  }         归约 stmt→write ( expr ) ;
+145   0 1 4 8 13 22 34 46 56 61 1 4 8 18              # { decls stmts if ( cond ) blk else { decls stmts stmt              }         归约 stmts→stmts stmt
+146   0 1 4 8 13 22 34 46 56 61 1 4 8                 # { decls stmts if ( cond ) blk else { decls stmts                   }         移进 “}”，转到状态 11
+147   0 1 4 8 13 22 34 46 56 61 1 4 8 11              # { decls stmts if ( cond ) blk else { decls stmts }                 }         归约 blk→{ decls stmts }
+148   0 1 4 8 13 22 34 46 56 61 62                    # { decls stmts if ( cond ) blk else blk                             }         归约 stmt→if ( cond ) blk else blk
+149   0 1 4 8 18                                      # { decls stmts stmt                                                 }         归约 stmts→stmts stmt
+150   0 1 4 8                                         # { decls stmts                                                      }         移进 “}”，转到状态 11
+151   0 1 4 8 11                                      # { decls stmts }                                                    #         归约 blk→{ decls stmts }
+152   0 3                                             # blk                                                                #         归约 prog→blk
+153   0 2                                             # prog                                                               #         接受
+
+-------------------- 项目集规范族 --------------------
+状态  LR(0) 项目集
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0     S′→· prog  prog→· blk  blk→· { decls stmts }
+1     blk→{ · decls stmts }  decls→· decls decl  decls→·
+2     S′→prog ·
+3     prog→blk ·
+4     blk→{ decls · stmts }  decls→decls · decl  decl→· int id ;  decl→· real id ;  stmts→· stmts stmt  stmts→·
+5     decl→int · id ;
+6     decl→real · id ;
+7     decls→decls decl ·
+8     blk→· { decls stmts }  blk→{ decls stmts · }  stmts→stmts · stmt  stmt→· id = expr ;  stmt→· if ( cond ) blk  stmt→· if ( cond ) blk else blk  stmt→· while ( cond ) blk  stmt→· blk  stmt→· read ( id ) ;  stmt→· write ( expr ) ;
+9     decl→int id · ;
+10    decl→real id · ;
+11    blk→{ decls stmts } ·
+12    stmt→id · = expr ;
+13    stmt→if · ( cond ) blk  stmt→if · ( cond ) blk else blk
+14    stmt→while · ( cond ) blk
+15    stmt→read · ( id ) ;
+16    stmt→write · ( expr ) ;
+17    stmt→blk ·
+18    stmts→stmts stmt ·
+19    decl→int id ; ·
+20    decl→real id ; ·
+21    stmt→id = · expr ;  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+22    stmt→if ( · cond ) blk  stmt→if ( · cond ) blk else blk  cond→· expr relop expr  cond→· expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+23    stmt→while ( · cond ) blk  cond→· expr relop expr  cond→· expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+24    stmt→read ( · id ) ;
+25    stmt→write ( · expr ) ;  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+26    factor→id ·
+27    expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→( · expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+28    factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor  factor→- · factor
+29    factor→num ·
+30    factor→rnum ·
+31    stmt→id = expr · ;  expr→expr · + term  expr→expr · - term
+32    expr→term ·  term→term · * factor  term→term · / factor
+33    term→factor ·
+34    stmt→if ( cond · ) blk  stmt→if ( cond · ) blk else blk
+35    cond→expr · relop expr  cond→expr ·  expr→expr · + term  expr→expr · - term
+36    stmt→while ( cond · ) blk
+37    stmt→read ( id · ) ;
+38    stmt→write ( expr · ) ;  expr→expr · + term  expr→expr · - term
+39    expr→expr · + term  expr→expr · - term  factor→( expr · )
+40    factor→- factor ·
+41    stmt→id = expr ; ·
+42    expr→expr + · term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+43    expr→expr - · term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+44    term→term * · factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+45    term→term / · factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+46    blk→· { decls stmts }  stmt→if ( cond ) · blk  stmt→if ( cond ) · blk else blk
+47    cond→expr relop · expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+48    blk→· { decls stmts }  stmt→while ( cond ) · blk
+49    stmt→read ( id ) · ;
+50    stmt→write ( expr ) · ;
+51    factor→( expr ) ·
+52    expr→expr + term ·  term→term · * factor  term→term · / factor
+53    expr→expr - term ·  term→term · * factor  term→term · / factor
+54    term→term * factor ·
+55    term→term / factor ·
+56    stmt→if ( cond ) blk ·  stmt→if ( cond ) blk · else blk
+57    cond→expr relop expr ·  expr→expr · + term  expr→expr · - term
+58    stmt→while ( cond ) blk ·
+59    stmt→read ( id ) ; ·
+60    stmt→write ( expr ) ; ·
+61    blk→· { decls stmts }  stmt→if ( cond ) blk else · blk
+62    stmt→if ( cond ) blk else blk ·
+
+分析结论：分析成功：源程序符合文法。
+分析步数：153 步；项目集 63 个；SLR(1) 冲突 0 处
+
+-------------------- 文法与集合 --------------------
+Vn = { prog, blk, decls, decl, stmts, stmt, cond, expr, term, factor }
+Vt = { {, }, int, id, ;, real, =, if, (, ), else, while, read, write, relop, +, -, *, /, num, rnum }
+S  = prog
+P  = { prog→blk ； blk→{ decls stmts } ； decls→decls decl ； decls→ε ； decl→int id ; ； decl→real id ; ； stmts→stmts stmt ； stmts→ε ； stmt→id = expr ; ； stmt→if ( cond ) blk ； stmt→if ( cond ) blk else blk ； stmt→while ( cond ) blk ； stmt→blk ； stmt→read ( id ) ; ； stmt→write ( expr ) ; ； cond→expr relop expr ； cond→expr ； expr→expr + term ； expr→expr - term ； expr→term ； term→term * factor ； term→term / factor ； term→factor ； factor→( expr ) ； factor→id ； factor→num ； factor→rnum ； factor→- factor }
+
+FIRST(prog) = { { }
+FIRST(blk) = { { }
+FIRST(decls) = { int, real, ε }
+FIRST(decl) = { int, real }
+FIRST(stmts) = { id, if, read, while, write, {, ε }
+FIRST(stmt) = { id, if, read, while, write, { }
+FIRST(cond) = { (, -, id, num, rnum }
+FIRST(expr) = { (, -, id, num, rnum }
+FIRST(term) = { (, -, id, num, rnum }
+FIRST(factor) = { (, -, id, num, rnum }
+
+FOLLOW(prog) = { # }
+FOLLOW(blk) = { #, else, id, if, read, while, write, {, } }
+FOLLOW(decls) = { id, if, int, read, real, while, write, {, } }
+FOLLOW(decl) = { id, if, int, read, real, while, write, {, } }
+FOLLOW(stmts) = { id, if, read, while, write, {, } }
+FOLLOW(stmt) = { id, if, read, while, write, {, } }
+FOLLOW(cond) = { ) }
+FOLLOW(expr) = { ), +, -, ;, relop }
+FOLLOW(term) = { ), *, +, -, /, ;, relop }
+FOLLOW(factor) = { ), *, +, -, /, ;, relop }
+
+################ 三、语义分析 ################
+名字  类型  存储名  作用域层次  起始地址  声明行
+------------------------------------------------
+n     int   n       0           1         4
+i     int   i       0           3         5
+sum   int   sum     0           5         6
+
+未发现词法、语法或语义错误。
+
+################ 四、中间代码（四元式） ################
+序号  四元式 (op, arg1, arg2, result)  含义
+---------------------------------------------------------------
+1     (=, 10, , n)                     n := 10
+2     (=, 1, , i)                      i := 1
+3     (=, 0, , sum)                    sum := 0
+4     (label, , , L1)                  标号 L1：
+5     (<=, i, n, t1)                   t1 := i <= n
+6     (jz, t1, , L2)                   若 t1 为假（0）则转到 L2
+7     (+, sum, i, t2)                  t2 := sum + i
+8     (=, t2, , sum)                   sum := t2
+9     (+, i, 1, t3)                    t3 := i + 1
+10    (=, t3, , i)                     i := t3
+11    (j, , , L1)                      无条件转到 L1
+12    (label, , , L2)                  标号 L2：
+13    (write, sum, , )                 输出 sum
+14    (>, sum, 50, t4)                 t4 := sum > 50
+15    (jz, t4, , L3)                   若 t4 为假（0）则转到 L3
+16    (write, 1, , )                   输出 1
+17    (j, , , L4)                      无条件转到 L4
+18    (label, , , L3)                  标号 L3：
+19    (write, 0, , )                   输出 0
+20    (label, , , L4)                  标号 L4：
+
+################ 五、解释执行结果 ################
+执行成功。
+说明：程序执行完毕。
+执行步数：93
+
+程序输出：
+  55
+  1
+
+变量  类型  最终值
+------------------
+n     int   10
+i     int   11
+sum   int   55

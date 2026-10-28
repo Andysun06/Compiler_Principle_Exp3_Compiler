@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ============================================================
+       CompilerLab —— 《编译原理》实验三：综合实验（小型语言编译系统）
+       单文件自包含发布：运行时与依赖全部打包进一个 exe，双击即可运行，
+       目标机无需安装任何环境。
+       ============================================================ -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CompilerLab</RootNamespace>
+    <AssemblyName>CompilerLab</AssemblyName>
+    <Version>1.0.0</Version>
+    <AssemblyTitle>CompilerLab 小型语言编译系统</AssemblyTitle>
+    <Product>CompilerLab</Product>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- 界面全部由代码构建，不使用 WinForms 设计器 -->
+    <NoWarn>$(NoWarn);WFO1000</NoWarn>
+  </PropertyGroup>
+
+</Project>

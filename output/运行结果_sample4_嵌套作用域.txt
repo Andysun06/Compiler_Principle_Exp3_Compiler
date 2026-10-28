@@ -1,0 +1,318 @@
+﻿《编译原理》实验三  综合实验（小型语言编译系统）运行结果
+示例：sample4_嵌套作用域.txt
+read 输入数据：（无）
+
+################ 源程序 ################
+// 示例 4  嵌套块与作用域
+// 内层重新声明同名变量 a，与外层互不影响；期望输出：100 然后 1
+{
+    int a;
+
+    a = 1;
+    {
+        int a;      // 内层重新声明，四元式中用 a$1 区分
+        a = 100;
+        write(a);
+    }
+    write(a);
+}
+
+################ 一、词法分析 ################
+序号  种别码 syn  单词符号  种类      行  列
+--------------------------------------------
+1     27          {         界符      3   1
+2     1           int       关键字    4   5
+3     10          a         标识符    4   9
+4     29          ;         界符      4   10
+5     10          a         标识符    6   5
+6     20          =         运算符    6   7
+7     11          1         整型常量  6   9
+8     29          ;         界符      6   10
+9     27          {         界符      7   5
+10    1           int       关键字    8   9
+11    10          a         标识符    8   13
+12    29          ;         界符      8   14
+13    10          a         标识符    9   9
+14    20          =         运算符    9   11
+15    11          100       整型常量  9   13
+16    29          ;         界符      9   16
+17    7           write     关键字    10  9
+18    25          (         界符      10  14
+19    10          a         标识符    10  15
+20    26          )         界符      10  16
+21    29          ;         界符      10  17
+22    28          }         界符      11  5
+23    7           write     关键字    12  5
+24    25          (         界符      12  10
+25    10          a         标识符    12  11
+26    26          )         界符      12  12
+27    29          ;         界符      12  13
+28    28          }         界符      13  1
+
+二元组序列 (syn, token)：
+(27,{) (1,int) (10,a) (29,;) (10,a) (20,=) (11,1) (29,;) (27,{) (1,int) (10,a) (29,;) (10,a) (20,=) (11,100) (29,;) (7,write) (25,() (10,a) (26,)) (29,;) (28,}) (7,write) (25,() (10,a) (26,)) (29,;) (28,})
+
+词法错误：
+  未发现词法错误。
+
+################ 二、语法分析 ################
+-------------------- SLR(1) 分析表 --------------------
+状态  {    }    int  id   ;    real  =    if   (    )    else  while  read  write  relop  +    -    *    /    num  rnum  #    prog  blk  decls  decl  stmts  stmt  cond  expr  term  factor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0     s1                                                                                                                      2     3
+1     r4   r4   r4   r4        r4         r4                   r4     r4    r4                                                           4
+2                                                                                                                        acc
+3                                                                                                                        r1
+4     r8   r8   s5   r8        s6         r8                   r8     r8    r8                                                                  7     8
+5                    s9
+6                    s10
+7     r3   r3   r3   r3        r3         r3                   r3     r3    r3
+8     s1   s11       s12                  s13                  s14    s15   s16                                                     17                       18
+9                         s19
+10                        s20
+11    r2   r2        r2                   r2             r2    r2     r2    r2                                           r2
+12                                   s21
+13                                             s22
+14                                             s23
+15                                             s24
+16                                             s25
+17    r13  r13       r13                  r13                  r13    r13   r13
+18    r7   r7        r7                   r7                   r7     r7    r7
+19    r5   r5   r5   r5        r5         r5                   r5     r5    r5
+20    r6   r6   r6   r6        r6         r6                   r6     r6    r6
+21                   s26                       s27                                             s28            s29  s30                                                   31    32    33
+22                   s26                       s27                                             s28            s29  s30                                             34    35    32    33
+23                   s26                       s27                                             s28            s29  s30                                             36    35    32    33
+24                   s37
+25                   s26                       s27                                             s28            s29  s30                                                   38    32    33
+26                        r25                       r25                            r25    r25  r25  r25  r25
+27                   s26                       s27                                             s28            s29  s30                                                   39    32    33
+28                   s26                       s27                                             s28            s29  s30                                                               40
+29                        r26                       r26                            r26    r26  r26  r26  r26
+30                        r27                       r27                            r27    r27  r27  r27  r27
+31                        s41                                                             s42  s43
+32                        r20                       r20                            r20    r20  r20  s44  s45
+33                        r23                       r23                            r23    r23  r23  r23  r23
+34                                                  s46
+35                                                  r17                            s47    s42  s43
+36                                                  s48
+37                                                  s49
+38                                                  s50                                   s42  s43
+39                                                  s51                                   s42  s43
+40                        r28                       r28                            r28    r28  r28  r28  r28
+41    r9   r9        r9                   r9                   r9     r9    r9
+42                   s26                       s27                                             s28            s29  s30                                                         52    33
+43                   s26                       s27                                             s28            s29  s30                                                         53    33
+44                   s26                       s27                                             s28            s29  s30                                                               54
+45                   s26                       s27                                             s28            s29  s30                                                               55
+46    s1                                                                                                                            56
+47                   s26                       s27                                             s28            s29  s30                                                   57    32    33
+48    s1                                                                                                                            58
+49                        s59
+50                        s60
+51                        r24                       r24                            r24    r24  r24  r24  r24
+52                        r18                       r18                            r18    r18  r18  s44  s45
+53                        r19                       r19                            r19    r19  r19  s44  s45
+54                        r21                       r21                            r21    r21  r21  r21  r21
+55                        r22                       r22                            r22    r22  r22  r22  r22
+56    r10  r10       r10                  r10            s61   r10    r10   r10
+57                                                  r16                                   s42  s43
+58    r12  r12       r12                  r12                  r12    r12   r12
+59    r14  r14       r14                  r14                  r14    r14   r14
+60    r15  r15       r15                  r15                  r15    r15   r15
+61    s1                                                                                                                            62
+62    r11  r11       r11                  r11                  r11    r11   r11
+
+-------------------- 分析过程表 --------------------
+步骤  状态栈                        符号栈                                          当前输入  动作
+------------------------------------------------------------------------------------------------------------------------
+1     0                             #                                               {         移进 “{”，转到状态 1
+2     0 1                           # {                                             int       归约 decls→ε
+3     0 1 4                         # { decls                                       int       移进 “int”，转到状态 5
+4     0 1 4 5                       # { decls int                                   a         移进 “a”，转到状态 9
+5     0 1 4 5 9                     # { decls int id                                ;         移进 “;”，转到状态 19
+6     0 1 4 5 9 19                  # { decls int id ;                              a         归约 decl→int id ;
+7     0 1 4 7                       # { decls decl                                  a         归约 decls→decls decl
+8     0 1 4                         # { decls                                       a         归约 stmts→ε
+9     0 1 4 8                       # { decls stmts                                 a         移进 “a”，转到状态 12
+10    0 1 4 8 12                    # { decls stmts id                              =         移进 “=”，转到状态 21
+11    0 1 4 8 12 21                 # { decls stmts id =                            1         移进 “1”，转到状态 29
+12    0 1 4 8 12 21 29              # { decls stmts id = num                        ;         归约 factor→num
+13    0 1 4 8 12 21 33              # { decls stmts id = factor                     ;         归约 term→factor
+14    0 1 4 8 12 21 32              # { decls stmts id = term                       ;         归约 expr→term
+15    0 1 4 8 12 21 31              # { decls stmts id = expr                       ;         移进 “;”，转到状态 41
+16    0 1 4 8 12 21 31 41           # { decls stmts id = expr ;                     {         归约 stmt→id = expr ;
+17    0 1 4 8 18                    # { decls stmts stmt                            {         归约 stmts→stmts stmt
+18    0 1 4 8                       # { decls stmts                                 {         移进 “{”，转到状态 1
+19    0 1 4 8 1                     # { decls stmts {                               int       归约 decls→ε
+20    0 1 4 8 1 4                   # { decls stmts { decls                         int       移进 “int”，转到状态 5
+21    0 1 4 8 1 4 5                 # { decls stmts { decls int                     a         移进 “a”，转到状态 9
+22    0 1 4 8 1 4 5 9               # { decls stmts { decls int id                  ;         移进 “;”，转到状态 19
+23    0 1 4 8 1 4 5 9 19            # { decls stmts { decls int id ;                a         归约 decl→int id ;
+24    0 1 4 8 1 4 7                 # { decls stmts { decls decl                    a         归约 decls→decls decl
+25    0 1 4 8 1 4                   # { decls stmts { decls                         a         归约 stmts→ε
+26    0 1 4 8 1 4 8                 # { decls stmts { decls stmts                   a         移进 “a”，转到状态 12
+27    0 1 4 8 1 4 8 12              # { decls stmts { decls stmts id                =         移进 “=”，转到状态 21
+28    0 1 4 8 1 4 8 12 21           # { decls stmts { decls stmts id =              100       移进 “100”，转到状态 29
+29    0 1 4 8 1 4 8 12 21 29        # { decls stmts { decls stmts id = num          ;         归约 factor→num
+30    0 1 4 8 1 4 8 12 21 33        # { decls stmts { decls stmts id = factor       ;         归约 term→factor
+31    0 1 4 8 1 4 8 12 21 32        # { decls stmts { decls stmts id = term         ;         归约 expr→term
+32    0 1 4 8 1 4 8 12 21 31        # { decls stmts { decls stmts id = expr         ;         移进 “;”，转到状态 41
+33    0 1 4 8 1 4 8 12 21 31 41     # { decls stmts { decls stmts id = expr ;       write     归约 stmt→id = expr ;
+34    0 1 4 8 1 4 8 18              # { decls stmts { decls stmts stmt              write     归约 stmts→stmts stmt
+35    0 1 4 8 1 4 8                 # { decls stmts { decls stmts                   write     移进 “write”，转到状态 16
+36    0 1 4 8 1 4 8 16              # { decls stmts { decls stmts write             (         移进 “(”，转到状态 25
+37    0 1 4 8 1 4 8 16 25           # { decls stmts { decls stmts write (           a         移进 “a”，转到状态 26
+38    0 1 4 8 1 4 8 16 25 26        # { decls stmts { decls stmts write ( id        )         归约 factor→id
+39    0 1 4 8 1 4 8 16 25 33        # { decls stmts { decls stmts write ( factor    )         归约 term→factor
+40    0 1 4 8 1 4 8 16 25 32        # { decls stmts { decls stmts write ( term      )         归约 expr→term
+41    0 1 4 8 1 4 8 16 25 38        # { decls stmts { decls stmts write ( expr      )         移进 “)”，转到状态 50
+42    0 1 4 8 1 4 8 16 25 38 50     # { decls stmts { decls stmts write ( expr )    ;         移进 “;”，转到状态 60
+43    0 1 4 8 1 4 8 16 25 38 50 60  # { decls stmts { decls stmts write ( expr ) ;  }         归约 stmt→write ( expr ) ;
+44    0 1 4 8 1 4 8 18              # { decls stmts { decls stmts stmt              }         归约 stmts→stmts stmt
+45    0 1 4 8 1 4 8                 # { decls stmts { decls stmts                   }         移进 “}”，转到状态 11
+46    0 1 4 8 1 4 8 11              # { decls stmts { decls stmts }                 write     归约 blk→{ decls stmts }
+47    0 1 4 8 17                    # { decls stmts blk                             write     归约 stmt→blk
+48    0 1 4 8 18                    # { decls stmts stmt                            write     归约 stmts→stmts stmt
+49    0 1 4 8                       # { decls stmts                                 write     移进 “write”，转到状态 16
+50    0 1 4 8 16                    # { decls stmts write                           (         移进 “(”，转到状态 25
+51    0 1 4 8 16 25                 # { decls stmts write (                         a         移进 “a”，转到状态 26
+52    0 1 4 8 16 25 26              # { decls stmts write ( id                      )         归约 factor→id
+53    0 1 4 8 16 25 33              # { decls stmts write ( factor                  )         归约 term→factor
+54    0 1 4 8 16 25 32              # { decls stmts write ( term                    )         归约 expr→term
+55    0 1 4 8 16 25 38              # { decls stmts write ( expr                    )         移进 “)”，转到状态 50
+56    0 1 4 8 16 25 38 50           # { decls stmts write ( expr )                  ;         移进 “;”，转到状态 60
+57    0 1 4 8 16 25 38 50 60        # { decls stmts write ( expr ) ;                }         归约 stmt→write ( expr ) ;
+58    0 1 4 8 18                    # { decls stmts stmt                            }         归约 stmts→stmts stmt
+59    0 1 4 8                       # { decls stmts                                 }         移进 “}”，转到状态 11
+60    0 1 4 8 11                    # { decls stmts }                               #         归约 blk→{ decls stmts }
+61    0 3                           # blk                                           #         归约 prog→blk
+62    0 2                           # prog                                          #         接受
+
+-------------------- 项目集规范族 --------------------
+状态  LR(0) 项目集
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0     S′→· prog  prog→· blk  blk→· { decls stmts }
+1     blk→{ · decls stmts }  decls→· decls decl  decls→·
+2     S′→prog ·
+3     prog→blk ·
+4     blk→{ decls · stmts }  decls→decls · decl  decl→· int id ;  decl→· real id ;  stmts→· stmts stmt  stmts→·
+5     decl→int · id ;
+6     decl→real · id ;
+7     decls→decls decl ·
+8     blk→· { decls stmts }  blk→{ decls stmts · }  stmts→stmts · stmt  stmt→· id = expr ;  stmt→· if ( cond ) blk  stmt→· if ( cond ) blk else blk  stmt→· while ( cond ) blk  stmt→· blk  stmt→· read ( id ) ;  stmt→· write ( expr ) ;
+9     decl→int id · ;
+10    decl→real id · ;
+11    blk→{ decls stmts } ·
+12    stmt→id · = expr ;
+13    stmt→if · ( cond ) blk  stmt→if · ( cond ) blk else blk
+14    stmt→while · ( cond ) blk
+15    stmt→read · ( id ) ;
+16    stmt→write · ( expr ) ;
+17    stmt→blk ·
+18    stmts→stmts stmt ·
+19    decl→int id ; ·
+20    decl→real id ; ·
+21    stmt→id = · expr ;  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+22    stmt→if ( · cond ) blk  stmt→if ( · cond ) blk else blk  cond→· expr relop expr  cond→· expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+23    stmt→while ( · cond ) blk  cond→· expr relop expr  cond→· expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+24    stmt→read ( · id ) ;
+25    stmt→write ( · expr ) ;  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+26    factor→id ·
+27    expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→( · expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+28    factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor  factor→- · factor
+29    factor→num ·
+30    factor→rnum ·
+31    stmt→id = expr · ;  expr→expr · + term  expr→expr · - term
+32    expr→term ·  term→term · * factor  term→term · / factor
+33    term→factor ·
+34    stmt→if ( cond · ) blk  stmt→if ( cond · ) blk else blk
+35    cond→expr · relop expr  cond→expr ·  expr→expr · + term  expr→expr · - term
+36    stmt→while ( cond · ) blk
+37    stmt→read ( id · ) ;
+38    stmt→write ( expr · ) ;  expr→expr · + term  expr→expr · - term
+39    expr→expr · + term  expr→expr · - term  factor→( expr · )
+40    factor→- factor ·
+41    stmt→id = expr ; ·
+42    expr→expr + · term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+43    expr→expr - · term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+44    term→term * · factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+45    term→term / · factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+46    blk→· { decls stmts }  stmt→if ( cond ) · blk  stmt→if ( cond ) · blk else blk
+47    cond→expr relop · expr  expr→· expr + term  expr→· expr - term  expr→· term  term→· term * factor  term→· term / factor  term→· factor  factor→· ( expr )  factor→· id  factor→· num  factor→· rnum  factor→· - factor
+48    blk→· { decls stmts }  stmt→while ( cond ) · blk
+49    stmt→read ( id ) · ;
+50    stmt→write ( expr ) · ;
+51    factor→( expr ) ·
+52    expr→expr + term ·  term→term · * factor  term→term · / factor
+53    expr→expr - term ·  term→term · * factor  term→term · / factor
+54    term→term * factor ·
+55    term→term / factor ·
+56    stmt→if ( cond ) blk ·  stmt→if ( cond ) blk · else blk
+57    cond→expr relop expr ·  expr→expr · + term  expr→expr · - term
+58    stmt→while ( cond ) blk ·
+59    stmt→read ( id ) ; ·
+60    stmt→write ( expr ) ; ·
+61    blk→· { decls stmts }  stmt→if ( cond ) blk else · blk
+62    stmt→if ( cond ) blk else blk ·
+
+分析结论：分析成功：源程序符合文法。
+分析步数：62 步；项目集 63 个；SLR(1) 冲突 0 处
+
+-------------------- 文法与集合 --------------------
+Vn = { prog, blk, decls, decl, stmts, stmt, cond, expr, term, factor }
+Vt = { {, }, int, id, ;, real, =, if, (, ), else, while, read, write, relop, +, -, *, /, num, rnum }
+S  = prog
+P  = { prog→blk ； blk→{ decls stmts } ； decls→decls decl ； decls→ε ； decl→int id ; ； decl→real id ; ； stmts→stmts stmt ； stmts→ε ； stmt→id = expr ; ； stmt→if ( cond ) blk ； stmt→if ( cond ) blk else blk ； stmt→while ( cond ) blk ； stmt→blk ； stmt→read ( id ) ; ； stmt→write ( expr ) ; ； cond→expr relop expr ； cond→expr ； expr→expr + term ； expr→expr - term ； expr→term ； term→term * factor ； term→term / factor ； term→factor ； factor→( expr ) ； factor→id ； factor→num ； factor→rnum ； factor→- factor }
+
+FIRST(prog) = { { }
+FIRST(blk) = { { }
+FIRST(decls) = { int, real, ε }
+FIRST(decl) = { int, real }
+FIRST(stmts) = { id, if, read, while, write, {, ε }
+FIRST(stmt) = { id, if, read, while, write, { }
+FIRST(cond) = { (, -, id, num, rnum }
+FIRST(expr) = { (, -, id, num, rnum }
+FIRST(term) = { (, -, id, num, rnum }
+FIRST(factor) = { (, -, id, num, rnum }
+
+FOLLOW(prog) = { # }
+FOLLOW(blk) = { #, else, id, if, read, while, write, {, } }
+FOLLOW(decls) = { id, if, int, read, real, while, write, {, } }
+FOLLOW(decl) = { id, if, int, read, real, while, write, {, } }
+FOLLOW(stmts) = { id, if, read, while, write, {, } }
+FOLLOW(stmt) = { id, if, read, while, write, {, } }
+FOLLOW(cond) = { ) }
+FOLLOW(expr) = { ), +, -, ;, relop }
+FOLLOW(term) = { ), *, +, -, /, ;, relop }
+FOLLOW(factor) = { ), *, +, -, /, ;, relop }
+
+################ 三、语义分析 ################
+名字  类型  存储名  作用域层次  起始地址  声明行
+------------------------------------------------
+a     int   a       0           1         4
+a     int   a$1     1           3         8
+
+未发现词法、语法或语义错误。
+
+################ 四、中间代码（四元式） ################
+序号  四元式 (op, arg1, arg2, result)  含义
+-------------------------------------------------
+1     (=, 1, , a)                      a := 1
+2     (=, 100, , a$1)                  a$1 := 100
+3     (write, a$1, , )                 输出 a$1
+4     (write, a, , )                   输出 a
+
+################ 五、解释执行结果 ################
+执行成功。
+说明：程序执行完毕。
+执行步数：4
+
+程序输出：
+  100
+  1
+
+变量          类型  最终值
+--------------------------
+a             int   1
+a（第 1 层）  int   100

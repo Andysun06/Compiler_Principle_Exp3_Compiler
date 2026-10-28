@@ -1,0 +1,14 @@
+// 示例 3  read 输入并计算
+// read 依次从界面上方的“read 输入数据”中取值，本例请填：7 8 9
+// 期望输出：24 然后 119
+{
+    int a;
+    int b;
+    int c;
+
+    read(a);
+    read(b);
+    read(c);
+    write(a + b + c);
+    write(a * (b + c));
+}

@@ -1,0 +1,22 @@
+// 示例 1  综合示例：循环求和 + 分支判断
+// 期望输出：55 然后 1
+{
+    int n;
+    int i;
+    int sum;
+
+    n = 10;
+    i = 1;
+    sum = 0;
+    while (i <= n) {
+        sum = sum + i;
+        i = i + 1;
+    }
+    write(sum);
+
+    if (sum > 50) {
+        write(1);
+    } else {
+        write(0);
+    }
+}
