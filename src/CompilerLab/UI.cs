@@ -354,6 +354,8 @@ public sealed class MainForm : Form
     private readonly TextBox _errText = Ui.MakeCodeBox(readOnly: true);
 
     private readonly GridPanel _quadGrid = new();
+    private readonly GridPanel _optGrid = new();
+    private readonly TextBox _optLog = Ui.MakeCodeBox(readOnly: true);
     private readonly TextBox _runOutput = Ui.MakeCodeBox(readOnly: true);
     private readonly GridPanel _varGrid = new();
 
@@ -661,7 +663,11 @@ public sealed class MainForm : Form
     private TabPage BuildQuadTab()
     {
         var page = new TabPage("④ 中间代码（四元式）") { BackColor = Color.White, Padding = new Padding(3) };
-        page.Controls.Add(_quadGrid);
+        var inner = new TabControl { Dock = DockStyle.Fill, Font = Ui.UiFont };
+        inner.Controls.Add(TextPanel.MakeTab("① 优化前（原始四元式）", _quadGrid));
+        inner.Controls.Add(TextPanel.MakeTab("② 优化后（用于执行）", _optGrid));
+        inner.Controls.Add(TextPanel.MakeTab("③ 优化说明", _optLog));
+        page.Controls.Add(inner);
         return page;
     }
 
@@ -756,7 +762,7 @@ public sealed class MainForm : Form
         _lexGrid.Clear(); _lexSeq.Clear(); _lexErr.Clear();
         _slrTable.Clear(); _slrProcess.Clear(); _slrStates.Clear(); _slrResult.Clear();
         _symGrid.Clear(); _errText.Clear();
-        _quadGrid.Clear();
+        _quadGrid.Clear(); _optGrid.Clear(); _optLog.Clear();
         _runOutput.Clear(); _varGrid.Clear();
     }
 
@@ -922,6 +928,19 @@ public sealed class MainForm : Form
             rows,
             $"中间代码：共 {r.Quads.Count} 条四元式" +
             (r.Quads.Count > 0 ? $"；临时变量 {r.Quads.Count(q => q.Result.StartsWith('t'))} 个" : ""));
+
+        var optRows = new List<string[]>();
+        foreach (var q in r.OptimizedQuads)
+            optRows.Add(new[] { q.Index.ToString(), q.Text, q.Meaning });
+        _optGrid.ShowRows(
+            new[] { "序号", "四元式 (op, arg1, arg2, result)", "含义" },
+            optRows,
+            $"优化后：共 {r.OptimizedQuads.Count} 条（减少 {r.Quads.Count - r.OptimizedQuads.Count} 条），" +
+            $"优化 {r.OptimizeLog.Count} 项");
+
+        _optLog.Text = r.OptimizeLog.Count == 0
+            ? "本程序没有可优化的四元式。"
+            : string.Join(Environment.NewLine, r.OptimizeLog.Select((s, i) => $"{i + 1}. {s}"));
     }
 
     /// <summary>解释执行四元式。</summary>
@@ -1018,7 +1037,14 @@ public sealed class MainForm : Form
 
         sb.AppendLine();
         sb.AppendLine("################ 四、中间代码（四元式） ################");
+        sb.AppendLine("-------------------- 优化前 --------------------");
         foreach (string line in _quadGrid.ToTextLines()) sb.AppendLine(line);
+        sb.AppendLine();
+        sb.AppendLine("-------------------- 优化后 --------------------");
+        foreach (string line in _optGrid.ToTextLines()) sb.AppendLine(line);
+        sb.AppendLine();
+        sb.AppendLine("-------------------- 优化说明 --------------------");
+        sb.AppendLine(_optLog.Text);
 
         sb.AppendLine();
         sb.AppendLine("################ 五、解释执行结果 ################");
@@ -1066,6 +1092,8 @@ public sealed class MainForm : Form
             Ui.WriteText(Path.Combine(dir, "语法分析过程表.txt"), string.Join(Environment.NewLine, _slrProcess.ToTextLines()));
             Ui.WriteText(Path.Combine(dir, "符号表.txt"), string.Join(Environment.NewLine, _symGrid.ToTextLines()));
             Ui.WriteText(Path.Combine(dir, "四元式.txt"), string.Join(Environment.NewLine, _quadGrid.ToTextLines()));
+            Ui.WriteText(Path.Combine(dir, "四元式_优化后.txt"), string.Join(Environment.NewLine, _optGrid.ToTextLines()));
+            Ui.WriteText(Path.Combine(dir, "优化说明.txt"), _optLog.Text);
             Ui.WriteText(Path.Combine(dir, "执行结果.txt"), _runOutput.Text);
 
             _status.Text = "结果已写入：" + dir;

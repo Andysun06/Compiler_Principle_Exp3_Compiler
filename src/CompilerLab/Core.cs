@@ -968,6 +968,13 @@ public sealed class CompileResult
     public List<Symbol> Symbols { get; } = new();
     public List<CompileError> Errors { get; } = new();
     public List<Quad> Quads { get; } = new();
+
+    /// <summary>局部优化后的四元式（解释执行使用这一份）。</summary>
+    public List<Quad> OptimizedQuads { get; } = new();
+
+    /// <summary>优化过程说明，便于在界面与报告中展示。</summary>
+    public List<string> OptimizeLog { get; } = new();
+
     public Dictionary<string, VarType> VarTypes { get; } = new();
 
     public RunResult? Run { get; set; }
@@ -999,7 +1006,10 @@ public static class Compiler
         var ctx = new Context(r, g);
         Parse(r, g, r.Slr, ctx);
 
-        // ------------------------- ④ 收尾 -------------------------
+        // ------------------------- ④ 局部优化 -------------------------
+        r.OptimizedQuads.AddRange(Optimizer.Optimize(r.Quads, r.OptimizeLog));
+
+        // ------------------------- ⑤ 收尾 -------------------------
         for (int i = 0; i < r.Quads.Count; i++) r.Quads[i].Index = i + 1;
         r.Symbols.AddRange(ctx.AllSymbols);
         foreach (var s in ctx.AllSymbols) r.VarTypes[s.Store] = s.Type;
@@ -1456,6 +1466,209 @@ public static class Compiler
 }
 
 // =====================================================================
+//                        六点五、四元式局部优化
+// =====================================================================
+
+/// <summary>
+/// 四元式的局部优化：常量折叠、公共子表达式消除、删除无用赋值。
+/// 全部在基本块内进行，且只处理临时变量，不改变源程序的可观察行为。
+/// </summary>
+public static class Optimizer
+{
+    public static List<Quad> Optimize(IReadOnlyList<Quad> src, List<string> log)
+    {
+        var code = src.Select(q => new Quad
+        {
+            Index = q.Index,
+            Op = q.Op,
+            Arg1 = q.Arg1,
+            Arg2 = q.Arg2,
+            Result = q.Result
+        }).ToList();
+
+        foreach (var (start, end) in SplitBlocks(code))
+        {
+            FoldConstants(code, start, end, log);
+            EliminateCommonSubexpressions(code, start, end, log);
+            RemoveDeadAssignments(code, start, end, log);
+        }
+
+        var result = code.Where(q => q.Op != "nop").ToList();
+        for (int i = 0; i < result.Count; i++) result[i].Index = i + 1;
+        return result;
+    }
+
+    /// <summary>按标号与跳转切分基本块，返回 [起, 止) 区间。</summary>
+    private static List<(int Start, int End)> SplitBlocks(List<Quad> code)
+    {
+        var blocks = new List<(int, int)>();
+        int start = 0;
+        for (int i = 0; i < code.Count; i++)
+        {
+            if (code[i].Op is "j" or "jz")
+            {
+                blocks.Add((start, i + 1));
+                start = i + 1;
+            }
+            else if (code[i].Op == "label" && i > start)
+            {
+                blocks.Add((start, i));
+                start = i;
+            }
+        }
+        if (start < code.Count) blocks.Add((start, code.Count));
+        return blocks;
+    }
+
+    private static bool IsBinary(string op)
+        => op is "+" or "-" or "*" or "/" or "<" or "<=" or ">" or ">=" or "==" or "!=";
+
+    private static bool IsTemp(string s)
+        => s.Length > 1 && s[0] == 't' && s.Skip(1).All(char.IsDigit);
+
+    private static bool IsIntConst(string s)
+        => s.Length > 0 && s.All(c => char.IsDigit(c) || (c == '-' && s.Length > 1));
+
+    private static string Subst(string s, Dictionary<string, string> map)
+        => map.TryGetValue(s, out var v) ? v : s;
+
+    /// <summary>常量折叠：两侧都是整型常量的运算直接算出结果，并把临时量的常量值向下传播。</summary>
+    private static void FoldConstants(List<Quad> code, int start, int end, List<string> log)
+    {
+        var consts = new Dictionary<string, string>();
+
+        for (int i = start; i < end; i++)
+        {
+            var q = code[i];
+
+            if (q.Op == "=" && IsIntConst(q.Arg1) && IsTemp(q.Result))
+            {
+                consts[q.Result] = q.Arg1;
+                continue;
+            }
+
+            if (IsBinary(q.Op))
+            {
+                string a1 = Subst(q.Arg1, consts), a2 = Subst(q.Arg2, consts);
+                if (IsIntConst(a1) && IsIntConst(a2))
+                {
+                    long x = long.Parse(a1), y = long.Parse(a2);
+                    if (!(q.Op == "/" && y == 0))
+                    {
+                        long v = q.Op switch
+                        {
+                            "+" => x + y,
+                            "-" => x - y,
+                            "*" => x * y,
+                            _ => (long)Math.Truncate((double)x / y)
+                        };
+                        string before = q.Text;
+                        q.Op = "=";
+                        q.Arg1 = v.ToString();
+                        q.Arg2 = "";
+                        if (IsTemp(q.Result)) consts[q.Result] = q.Arg1;
+                        log.Add($"常量折叠：{before} → {q.Text}");
+                        continue;
+                    }
+                }
+                q.Arg1 = a1;
+                q.Arg2 = a2;
+                continue;
+            }
+
+            if (q.Op == "jz") q.Arg1 = Subst(q.Arg1, consts);
+        }
+    }
+
+    /// <summary>公共子表达式消除：同一基本块内重复出现的表达式直接复用前面算出的结果。</summary>
+    private static void EliminateCommonSubexpressions(List<Quad> code, int start, int end, List<string> log)
+    {
+        var exprs = new Dictionary<string, string>();   // 表达式 → 已算出的结果名
+        var alias = new Dictionary<string, string>();   // 临时量 → 与它等价的临时量
+
+        string Resolve(string s)
+        {
+            while (alias.TryGetValue(s, out var v)) s = v;
+            return s;
+        }
+
+        for (int i = start; i < end; i++)
+        {
+            var q = code[i];
+            if (q.Op == "nop") continue;
+
+            if (q.Op is "label" or "j" or "jz")
+            {
+                if (q.Op == "jz") q.Arg1 = Resolve(q.Arg1);
+                continue;
+            }
+
+            q.Arg1 = Resolve(q.Arg1);
+            q.Arg2 = Resolve(q.Arg2);
+
+            if (IsBinary(q.Op))
+            {
+                string key = $"{q.Op} {q.Arg1} {q.Arg2}";
+                if (exprs.TryGetValue(key, out var prev) && prev != q.Result)
+                {
+                    string before = q.Text;
+                    if (IsTemp(q.Result))
+                    {
+                        // 结果也是临时量：直接让它等价于前面的结果，后续引用一并替换
+                        alias[q.Result] = prev;
+                        q.Op = "nop";
+                        log.Add($"公共子表达式消除：{before} 复用 {prev}");
+                    }
+                    else
+                    {
+                        q.Op = "=";
+                        q.Arg1 = prev;
+                        q.Arg2 = "";
+                        log.Add($"公共子表达式消除：{before} → {q.Text}");
+                    }
+                }
+                else
+                {
+                    exprs[key] = q.Result;
+                }
+                continue;
+            }
+
+            // 名字被重新赋值后，引用它的表达式不再等价
+            if ((q.Op == "=" || q.Op == "read") && q.Result.Length > 0)
+            {
+                foreach (string k in exprs.Where(kv => kv.Value == q.Result).Select(kv => kv.Key).ToList())
+                    exprs.Remove(k);
+            }
+        }
+    }
+
+    /// <summary>删除无用赋值：临时量算出后再没有被任何四元式引用，这条赋值就是死代码。</summary>
+    private static void RemoveDeadAssignments(List<Quad> code, int start, int end, List<string> log)
+    {
+        var refs = new Dictionary<string, int>();
+        foreach (var q in code)
+        {
+            if (q.Op == "nop") continue;
+            if (IsTemp(q.Arg1)) refs[q.Arg1] = refs.GetValueOrDefault(q.Arg1) + 1;
+            if (IsTemp(q.Arg2)) refs[q.Arg2] = refs.GetValueOrDefault(q.Arg2) + 1;
+        }
+
+        for (int i = start; i < end; i++)
+        {
+            var q = code[i];
+            if (q.Op == "nop" || !IsTemp(q.Result)) continue;
+            if (q.Op != "=" && q.Op != "neg" && !IsBinary(q.Op)) continue;
+            if (refs.GetValueOrDefault(q.Result) > 0) continue;
+
+            string before = q.Text;
+            q.Op = "nop";
+            log.Add($"删除无用赋值：{before}");
+        }
+    }
+}
+
+// =====================================================================
 //                          七、解释执行四元式
 // =====================================================================
 
@@ -1481,8 +1694,10 @@ public static class Interpreter
         var env = new Dictionary<string, object>();
         var labels = new Dictionary<string, int>();
 
-        for (int i = 0; i < r.Quads.Count; i++)
-            if (r.Quads[i].Op == "label") labels[r.Quads[i].Result] = i;
+        var quads = r.OptimizedQuads.Count > 0 ? r.OptimizedQuads : r.Quads;
+
+        for (int i = 0; i < quads.Count; i++)
+            if (quads[i].Op == "label") labels[quads[i].Result] = i;
 
         // 已声明的变量先按类型置初值（用存储名，便于区分不同层次的同名变量）
         foreach (var s in r.Symbols)
@@ -1493,7 +1708,7 @@ public static class Interpreter
 
         int pc = 0, step = 0, readIndex = 0;
 
-        while (pc >= 0 && pc < r.Quads.Count)
+        while (pc >= 0 && pc < quads.Count)
         {
             if (++step > 200000)
             {
@@ -1502,7 +1717,7 @@ public static class Interpreter
                 break;
             }
 
-            var q = r.Quads[pc];
+            var q = quads[pc];
             switch (q.Op)
             {
                 case "label":
